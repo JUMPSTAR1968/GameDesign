@@ -1,45 +1,30 @@
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 public class SampleCode : MonoBehaviour
 {
-    //[SerializeField] private GameObject prefab;
-    [SerializeField] private GameObject moveObject;
-    [SerializeField] private float speed = 5;
-    void Start()
-    {
-        /*
-        //Instantiate(prefab, new Vector2(-2, 0), Quaternion.identity); //(x, y, z, w)
-        GameObject newGameObject = Instantiate(prefab);
-        //newGameObject.transform.position = new Vector2(5, 0);
-        newGameObject.transform.SetPositionAndRotation
-            (
-                new Vector3(5, 0, 0),
-                Quaternion.Euler(45, 30, 0)
-            );
-        */
-    }
+    // Add this line so you can drag your Bomb here in the Inspector
+    public GameObject bombPrefab; 
+    
+    public GameObject moveObject;
+    public float speed = 5;
 
-    // Update is called once per frame
     void Update()
     {
-        /*
-        if (Input.GetMouseButtonDown(0)) 
+        // --- 1. BOMB SPAWNING LOGIC ---
+        // Input.GetMouseButtonDown(0) is Left Click
+        if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Left click is pressed");
+            // Spawn the bomb at the 'moveObject' (Player) position, not the Spawner's position
+            Instantiate(bombPrefab, moveObject.transform.position, Quaternion.identity);
         }
 
-        else if (Input.GetMouseButtonDown(1)) 
-        {
-            Debug.Log("Right click is pressed");
-        }
-        */
-
+        // --- 2. MOVEMENT LOGIC (Already working) ---
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
 
         Vector2 move = new Vector2(x, y);
 
+        // This moves the player
         moveObject.transform.Translate(move * Time.deltaTime * speed);
     }
 }
