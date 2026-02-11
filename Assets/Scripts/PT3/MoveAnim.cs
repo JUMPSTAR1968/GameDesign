@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class MoveAnim : MonoBehaviour
 {
     [SerializeField] float rotationFactorPerFrame;
+    [SerializeField] SaveSystem saveSystem;
 
     PlayerInputSystem inputSystem;
     CharacterController controller;
@@ -19,6 +20,7 @@ public class MoveAnim : MonoBehaviour
         animator = GetComponent<Animator>();
 
         inputSystem.PlayerMovement.Move.performed += OnMovementInputs;
+        inputSystem.PlayerMovement.Save.performed += SavePlayerDetails;
 
     }
 
@@ -64,5 +66,10 @@ public class MoveAnim : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(positionToLookAt);
             transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, rotationFactorPerFrame * Time.deltaTime);
         }
+    }
+
+    private void SavePlayerDetails(InputAction.CallbackContext context) 
+    {
+        saveSystem.Save(transform.position, transform.rotation);
     }
 }
