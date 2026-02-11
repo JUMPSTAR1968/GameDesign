@@ -18,6 +18,7 @@ public class MoveAnim : MonoBehaviour
         inputSystem = new PlayerInputSystem();
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        saveSystem.Load();
 
         inputSystem.PlayerMovement.Move.performed += OnMovementInputs;
         inputSystem.PlayerMovement.Save.performed += SavePlayerDetails;
