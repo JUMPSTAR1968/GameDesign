@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PT2_Code : MonoBehaviour
+public class PT3_Code : MonoBehaviour
 {
 
 

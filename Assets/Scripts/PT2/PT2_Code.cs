@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PT1_Code : MonoBehaviour
+public class PT2_Code : MonoBehaviour
 {
     // Add this line so you can drag your Bomb here in the Inspector
     public GameObject bombPrefab; 
