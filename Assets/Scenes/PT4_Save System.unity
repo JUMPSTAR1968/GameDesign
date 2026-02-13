@@ -582,6 +582,7 @@ MonoBehaviour:
   rotationFactorPerFrame: 15
   saveSystem: {fileID: 1834970599}
   scoreText: {fileID: 2036699337}
+  sphereObject: {fileID: 807455466}
 --- !u!1 &1224589489
 GameObject:
   m_ObjectHideFlags: 0

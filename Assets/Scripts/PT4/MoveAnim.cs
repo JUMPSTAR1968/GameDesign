@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using TMPro; // Needed for UI
+using TMPro;
 
 public class MoveAnim : MonoBehaviour
 {
@@ -8,8 +8,9 @@ public class MoveAnim : MonoBehaviour
     [SerializeField] float rotationFactorPerFrame = 15.0f;
     [SerializeField] SaveSystem saveSystem;
 
-    [Header("Score UI")]
-    public TextMeshProUGUI scoreText; // Drag your ScoreText object here
+    [Header("References")]
+    public TextMeshProUGUI scoreText;
+    public GameObject sphereObject; // <-- DRAG YOUR SPHERE HERE IN INSPECTOR!
 
     // Variables
     int currentScore = 0;
@@ -27,60 +28,56 @@ public class MoveAnim : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
-        // 1. LOAD GAME & GET SCORE
-        // We capture the returned data from SaveSystem
+        // 1. LOAD GAME
         SavePosition data = saveSystem.Load();
 
         if (data != null)
         {
-            currentScore = data.score; // Restore the score
+            currentScore = data.score;
 
-            // Only move player if they have a saved position (prevents getting stuck at 0,0,0)
+            // Load Player Position
             if (data.position != Vector3.zero)
             {
-                // Disable controller briefly to warp character
                 controller.enabled = false;
                 transform.position = data.position;
                 transform.rotation = data.rotation;
                 controller.enabled = true;
+            }
+
+            // Load Sphere Position (The Fix!)
+            if (sphereObject != null && data.spherePos != Vector3.zero)
+            {
+                sphereObject.transform.position = data.spherePos;
             }
         }
 
         UpdateScoreUI();
 
         inputSystem.PlayerMovement.Move.performed += OnMovementInputs;
-        inputSystem.PlayerMovement.Save.performed += SavePlayerDetails; // Manual Save (Button)
+        inputSystem.PlayerMovement.Save.performed += SavePlayerDetails;
     }
 
-    // --- NEW: SPHERE INTERACTION ---
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Orb")) // Ensure Sphere has tag "Orb"
+        if (other.CompareTag("Orb"))
         {
-            // 1. Add Score
             currentScore++;
             UpdateScoreUI();
-
-            // 2. RESPAWN THE SPHERE
-            // Moves the sphere to a new random spot instead of destroying it
             RespawnSphere(other.gameObject);
 
-            // 3. AUTO-SAVE 
-            // Save immediately when score changes
-            saveSystem.Save(transform.position, transform.rotation, currentScore);
+            // Auto-save everything including the new sphere position
+            saveSystem.Save(transform.position, transform.rotation, currentScore, sphereObject.transform.position);
         }
     }
 
     void RespawnSphere(GameObject sphere)
     {
-        // A standard Plane (Scale 1,1,1) is 10x10 units.
-        // The center is usually (0,0,0), so it goes from -5 to +5 on X and Z.
-
-        float randomX = Random.Range(-4.5f, 4.5f); // Keep it slightly inside the edge
+        float randomX = Random.Range(-4.5f, 4.5f);
         float randomZ = Random.Range(-4.5f, 4.5f);
-
-        // Move the sphere to the new position
         sphere.transform.position = new Vector3(randomX, 0.5f, randomZ);
+
+        // Random Color (Optional)
+        sphere.GetComponent<Renderer>().material.color = Random.ColorHSV();
     }
 
     void UpdateScoreUI()
@@ -89,20 +86,28 @@ public class MoveAnim : MonoBehaviour
             scoreText.text = "Score: " + currentScore;
     }
 
-    // --- EXISTING MOVEMENT CODE ---
-
-    private void OnEnable() => inputSystem.PlayerMovement.Enable();
-    private void OnDisable() => inputSystem.PlayerMovement.Disable();
-
     private void Update()
     {
+        // --- NEW INPUT SYSTEM VERSION ---
+        // This checks the spacebar without crashing your game
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            saveSystem.DeleteSaveFile();
+            currentScore = 0;
+            UpdateScoreUI();
+            Debug.Log("Reset Complete. Close and Reopen game to see effects.");
+        }
+
         HandleRotation();
         HandleAnimation();
 
-        // Simple Gravity (keeps player on floor)
         Vector3 move = new Vector3(currentInputMovement.x, -2f, currentInputMovement.z);
-        controller.Move(move * Time.deltaTime * 3.0f); // Adjust speed if needed
+        controller.Move(move * Time.deltaTime * 3.0f);
     }
+
+    // --- BOILERPLATE MOVEMENT CODE ---
+    private void OnEnable() => inputSystem.PlayerMovement.Enable();
+    private void OnDisable() => inputSystem.PlayerMovement.Disable();
 
     private void OnMovementInputs(InputAction.CallbackContext context)
     {
@@ -114,10 +119,7 @@ public class MoveAnim : MonoBehaviour
 
     private void HandleAnimation()
     {
-        if (isMovementPressed)
-            animator.SetBool("isWalking", true);
-        else
-            animator.SetBool("isWalking", false);
+        animator.SetBool("isWalking", isMovementPressed);
     }
 
     private void HandleRotation()
@@ -126,7 +128,6 @@ public class MoveAnim : MonoBehaviour
         positionToLookAt.x = currentInputMovement.x;
         positionToLookAt.y = 0f;
         positionToLookAt.z = currentInputMovement.z;
-
         Quaternion currentRotation = transform.rotation;
 
         if (isMovementPressed)
@@ -138,6 +139,10 @@ public class MoveAnim : MonoBehaviour
 
     private void SavePlayerDetails(InputAction.CallbackContext context)
     {
-        saveSystem.Save(transform.position, transform.rotation, currentScore);
+        // Manual Save
+        if (sphereObject != null)
+        {
+            saveSystem.Save(transform.position, transform.rotation, currentScore, sphereObject.transform.position);
+        }
     }
 }
